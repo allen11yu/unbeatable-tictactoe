@@ -1,32 +1,11 @@
 import 'package:flutter/material.dart';
 
-class GridBuilder extends StatefulWidget {
+class GridBuilder extends StatelessWidget {
+  final Function nextMove;
   final List<String> gameGrid;
-  String nextMove;
+  String player;
 
-  GridBuilder({Key key, this.gameGrid, this.nextMove}) : super(key: key);
-
-  @override
-  _GridBuilderState createState() => _GridBuilderState();
-}
-
-class _GridBuilderState extends State<GridBuilder> {
-  void _nextMove(int index) {
-    setState(() {
-      var symbol = widget.gameGrid[index];
-      if (symbol == '') {
-        widget.gameGrid[index] = widget.nextMove;
-      } else {
-        return;
-      }
-    });
-
-    if (widget.nextMove == 'X') {
-      widget.nextMove = 'O';
-    } else {
-      widget.nextMove = 'X';
-    }
-  }
+  GridBuilder(this.nextMove, this.gameGrid, this.player);
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +21,10 @@ class _GridBuilderState extends State<GridBuilder> {
           return ElevatedButton(
             style: ElevatedButton.styleFrom(primary: Colors.white),
             onPressed: () {
-              _nextMove(index);
+              nextMove(index);
             },
             child: Text(
-              widget.gameGrid[index],
+              gameGrid[index],
               style: const TextStyle(
                 color: Colors.black,
                 fontSize: 50,
