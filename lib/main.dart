@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:dart_numerics/dart_numerics.dart';
 import 'package:flutter/material.dart';
 import './select_player.dart';
 import './grid_builder.dart';
@@ -13,32 +16,100 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   List<String> grid = ['', '', '', '', '', '', '', '', ''];
   var winner = '';
-  var currPlayer = '';
-  String human;
-  String ai;
+  var currPlayer = 'X';
+  String human = 'X';
+  String ai = 'O';
   var gameOver = false;
 
   void nextMove(int index) {
-    setState(() {
-      if (grid[index] != '' || gameOver) {
-        return;
-      } else {
-        // change line 27
-        grid[index] = currPlayer;
-        winner = checkGameOver();
+    // if current player = human
+    // // insertMove()
+    // else // current player = ai
+    // aiMove()
+    if (grid[index] != '' || gameOver) {
+      return;
+    } else {
+      aiMove();
+      humanMove(index);
 
-        if (winner != '') {
-          print('winner is $winner');
+      winner = checkGameOver();
+      if (winner != '') {
+        print('winner is $winner');
+        setState(() {
           gameOver = true;
-        } else {
-          if (currPlayer == human) {
-            currPlayer = ai;
-          } else {
-            currPlayer = human;
-          }
+        });
+      }
+    }
+  }
+
+  void humanMove(int index) {
+    setState(() {
+      print('human set state');
+      grid[index] = human;
+    });
+    currPlayer = ai;
+  }
+
+  void aiMove() {
+    print('in here');
+    var bestScore = int64MinValue;
+    int bestIndex = 0;
+    for (int i = 0; i < grid.length; i++) {
+      if (grid[i] == '') {
+        grid[i] = ai;
+        var score = minimax(grid, 0, false);
+        grid[i] = '';
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = i;
         }
       }
+    }
+
+    setState(() {
+      print(bestIndex);
+      grid[bestIndex] = ai;
+      print(grid.toString());
     });
+    currPlayer = human;
+  }
+
+  int minimax(List<String> gameGrid, int depth, bool isMax) {
+    winner = checkGameOver();
+
+    if (winner == human) {
+      return -10;
+    } else if (winner == ai) {
+      return 10;
+    } else if (winner == 'tie') {
+      return 0;
+    }
+
+    if (isMax) {
+      var maxVal = int64MinValue;
+      var gridCopy = [...gameGrid];
+      for (int i = 0; i < gridCopy.length; i++) {
+        if (gridCopy[i] == '') {
+          gridCopy[i] = ai;
+          var val = minimax(gridCopy, 0, false);
+          gridCopy[i] = '';
+          maxVal = max(maxVal, val);
+        }
+      }
+      return maxVal;
+    } else {
+      var minVal = int64MaxValue;
+      var gridCopy = [...gameGrid];
+      for (int i = 0; i < gridCopy.length; i++) {
+        if (gridCopy[i] == '') {
+          gridCopy[i] = human;
+          var val = minimax(gridCopy, 0, true);
+          gridCopy[i] = '';
+          minVal = min(minVal, val);
+        }
+      }
+      return minVal;
+    }
   }
 
   void startGame(String player) {
