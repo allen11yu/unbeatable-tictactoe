@@ -22,16 +22,20 @@ class _MyAppState extends State<MyApp> {
   String human;
   String ai;
   var gameOver = false;
+  var aiFirst = false;
 
   void nextMove(int index) {
     if (grid[index] != '' || gameOver) {
       return;
     } else {
+      aiFirst = true;
       setState(() {
         humanMove(index);
 
         int aiIndex = aiMove();
-        grid[aiIndex] = ai;
+        if(aiIndex != -1) {
+          grid[aiIndex] = ai;
+        }
 
         winner = checkGameOver();
         if (winner != '') {
@@ -81,13 +85,13 @@ class _MyAppState extends State<MyApp> {
   }
 
   int minimax(List<String> gameGrid, int depth, bool isMax) {
-    winner = checkGameOver();
+    var currWinner = checkGameOver();
 
-    if (winner == human) {
+    if (currWinner == human) {
       return -10 + depth;
-    } else if (winner == ai) {
+    } else if (currWinner == ai) {
       return 10 - depth;
-    } else if (winner == 'tie') {
+    } else if (currWinner == 'tie') {
       return 0;
     }
 
@@ -125,11 +129,22 @@ class _MyAppState extends State<MyApp> {
     } else {
       ai = 'X';
     }
-    //int aiIndex = aiMove();
+
     setState(() {
-      //grid[aiIndex] = ai;
       currPlayer = player;
     });
+  }
+
+  void aiGoFirst() {
+    if (aiFirst) {
+      return;
+    } else {
+      aiFirst = true;
+      int aiIndex = aiMove();
+      setState(() {
+        grid[aiIndex] = ai;
+      });
+    }
   }
 
   String checkGameOver() {
@@ -211,6 +226,7 @@ class _MyAppState extends State<MyApp> {
     }
     winner = '';
 
+    aiFirst = false;
     setState(() {
       currPlayer = '';
       gameOver = false;
@@ -234,9 +250,7 @@ class _MyAppState extends State<MyApp> {
                 : Column(
                     children: [
                       ElevatedButton(
-                        onPressed: () {
-                          print('AI will go first');
-                        },
+                        onPressed: aiGoFirst,
                         child: const Text('You go first'),
                       ),
                       GridBuilder(
