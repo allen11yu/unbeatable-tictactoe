@@ -6,9 +6,11 @@ import './select_player.dart';
 import './grid_builder.dart';
 import './restart.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key key}) : super(key: key);
+
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -16,44 +18,53 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   List<String> grid = ['', '', '', '', '', '', '', '', ''];
   var winner = '';
-  var currPlayer = 'X';
-  String human = 'X';
-  String ai = 'O';
+  var currPlayer = '';
+  String human;
+  String ai;
   var gameOver = false;
 
   void nextMove(int index) {
-    // if current player = human
-    // // insertMove()
-    // else // current player = ai
-    // aiMove()
     if (grid[index] != '' || gameOver) {
       return;
     } else {
-      aiMove();
-      humanMove(index);
+      setState(() {
+        humanMove(index);
 
-      winner = checkGameOver();
-      if (winner != '') {
-        print('winner is $winner');
-        setState(() {
+        int aiIndex = aiMove();
+        grid[aiIndex] = ai;
+
+        winner = checkGameOver();
+        if (winner != '') {
+          print('winner is $winner');
           gameOver = true;
-        });
-      }
+        }
+
+        // add some if checks for even move, odd move
+      });
     }
   }
 
+  // return -1 when no more avaiable index.
+  int nextAvailableIndex() {
+    for (int i = 0; i < grid.length; i++) {
+      if (grid[i] == '') {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   void humanMove(int index) {
-    setState(() {
-      print('human set state');
-      grid[index] = human;
-    });
+    print('human chose index: $index');
+    grid[index] = human;
     currPlayer = ai;
   }
 
-  void aiMove() {
-    print('in here');
+  // return the index and update state in next move.
+  // set the bestIndex to the next aviable index, and set it accordingily
+  int aiMove() {
     var bestScore = int64MinValue;
-    int bestIndex = 0;
+    int bestIndex = nextAvailableIndex();
     for (int i = 0; i < grid.length; i++) {
       if (grid[i] == '') {
         grid[i] = ai;
@@ -65,46 +76,41 @@ class _MyAppState extends State<MyApp> {
         }
       }
     }
-
-    setState(() {
-      print(bestIndex);
-      grid[bestIndex] = ai;
-      print(grid.toString());
-    });
     currPlayer = human;
+    return bestIndex;
   }
 
   int minimax(List<String> gameGrid, int depth, bool isMax) {
     winner = checkGameOver();
 
     if (winner == human) {
-      return -10;
+      return -10 + depth;
     } else if (winner == ai) {
-      return 10;
+      return 10 - depth;
     } else if (winner == 'tie') {
       return 0;
     }
 
     if (isMax) {
       var maxVal = int64MinValue;
-      var gridCopy = [...gameGrid];
-      for (int i = 0; i < gridCopy.length; i++) {
-        if (gridCopy[i] == '') {
-          gridCopy[i] = ai;
-          var val = minimax(gridCopy, 0, false);
-          gridCopy[i] = '';
+      // var gridCopy = [...gameGrid];
+      for (int i = 0; i < gameGrid.length; i++) {
+        if (gameGrid[i] == '') {
+          gameGrid[i] = ai;
+          var val = minimax(gameGrid, depth + 1, false);
+          gameGrid[i] = '';
           maxVal = max(maxVal, val);
         }
       }
       return maxVal;
     } else {
       var minVal = int64MaxValue;
-      var gridCopy = [...gameGrid];
-      for (int i = 0; i < gridCopy.length; i++) {
-        if (gridCopy[i] == '') {
-          gridCopy[i] = human;
-          var val = minimax(gridCopy, 0, true);
-          gridCopy[i] = '';
+      // var gridCopy = [...gameGrid];
+      for (int i = 0; i < gameGrid.length; i++) {
+        if (gameGrid[i] == '') {
+          gameGrid[i] = human;
+          var val = minimax(gameGrid, depth - 1, true);
+          gameGrid[i] = '';
           minVal = min(minVal, val);
         }
       }
@@ -119,8 +125,9 @@ class _MyAppState extends State<MyApp> {
     } else {
       ai = 'X';
     }
-
+    //int aiIndex = aiMove();
     setState(() {
+      //grid[aiIndex] = ai;
       currPlayer = player;
     });
   }
@@ -224,10 +231,20 @@ class _MyAppState extends State<MyApp> {
           children: [
             currPlayer == ''
                 ? SelectPlayer(startGame)
-                : GridBuilder(
-                    nextMove,
-                    grid,
-                    currPlayer,
+                : Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          print('AI will go first');
+                        },
+                        child: const Text('You go first'),
+                      ),
+                      GridBuilder(
+                        nextMove,
+                        grid,
+                        currPlayer,
+                      ),
+                    ],
                   ),
             gameOver
                 ? Restart(
