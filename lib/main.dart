@@ -24,6 +24,9 @@ class _MyAppState extends State<MyApp> {
   var gameOver = false;
   var aiFirst = false;
 
+  var count = 0;
+  var sum = 0;
+
   void nextMove(int index) {
     if (grid[index] != '' || gameOver) {
       return;
@@ -33,7 +36,7 @@ class _MyAppState extends State<MyApp> {
         humanMove(index);
 
         int aiIndex = aiMove();
-        if(aiIndex != -1) {
+        if (aiIndex != -1) {
           grid[aiIndex] = ai;
         }
 
@@ -73,6 +76,9 @@ class _MyAppState extends State<MyApp> {
       if (grid[i] == '') {
         grid[i] = ai;
         var score = minimax(grid, 0, false);
+        //var score = minimaxAB(grid, 0, int64MinValue, int64MaxValue, false);
+        sum += count;
+        count = 0;
         grid[i] = '';
         if (score > bestScore) {
           bestScore = score;
@@ -80,12 +86,17 @@ class _MyAppState extends State<MyApp> {
         }
       }
     }
+    print('there are $sum number of possible');
+    sum = 0;
     currPlayer = human;
     return bestIndex;
   }
 
   int minimax(List<String> gameGrid, int depth, bool isMax) {
     var currWinner = checkGameOver();
+    if (currWinner == '') {
+      count++;
+   }
 
     if (currWinner == human) {
       return -10 + depth;
@@ -116,6 +127,55 @@ class _MyAppState extends State<MyApp> {
           var val = minimax(gameGrid, depth - 1, true);
           gameGrid[i] = '';
           minVal = min(minVal, val);
+        }
+      }
+      return minVal;
+    }
+  }
+
+  int minimaxAB(List<String> gameGrid, int depth, int alpha, int beta, bool isMax) {
+    var currWinner = checkGameOver();
+    if (currWinner == '') {
+      count++;
+    }
+
+    if (currWinner == human) {
+      return -10 + depth;
+    } else if (currWinner == ai) {
+      return 10 - depth;
+    } else if (currWinner == 'tie') {
+      return 0;
+    }
+
+    if (isMax) {
+      var maxVal = int64MinValue;
+      // var gridCopy = [...gameGrid];
+      for (int i = 0; i < gameGrid.length; i++) {
+        if (gameGrid[i] == '') {
+          gameGrid[i] = ai;
+          var val = minimaxAB(gameGrid, depth + 1, alpha, beta, false);
+          gameGrid[i] = '';
+          maxVal = max(maxVal, val);
+          alpha = max(alpha, val);
+          if (beta <= alpha) {
+            break;
+          }
+        }
+      }
+      return maxVal;
+    } else {
+      var minVal = int64MaxValue;
+      // var gridCopy = [...gameGrid];
+      for (int i = 0; i < gameGrid.length; i++) {
+        if (gameGrid[i] == '') {
+          gameGrid[i] = human;
+          var val = minimaxAB(gameGrid, depth - 1, alpha, beta, true);
+          gameGrid[i] = '';
+          minVal = min(minVal, val);
+          beta = min(beta, val);
+          if(beta <= alpha) {
+            break;
+          }
         }
       }
       return minVal;
