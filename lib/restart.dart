@@ -10,7 +10,7 @@ class Restart extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        winner == 'tie' ? Text('Game is tied!') : Text('Winner is $winner'),
+        winner == 'tie' ? const Text('Game is tied!') : const Text('AI wins!'),
         ElevatedButton(
           onPressed: resetHandler,
           child: const Text('Restart'),

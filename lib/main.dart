@@ -22,7 +22,7 @@ class _MyAppState extends State<MyApp> {
   String human;
   String ai;
   var gameOver = false;
-  var aiFirst = false;
+  var humanFirst = false;
 
   var count = 0;
   var sum = 0;
@@ -31,7 +31,7 @@ class _MyAppState extends State<MyApp> {
     if (grid[index] != '' || gameOver) {
       return;
     } else {
-      aiFirst = true;
+      humanFirst = true;
       setState(() {
         humanMove(index);
 
@@ -42,11 +42,8 @@ class _MyAppState extends State<MyApp> {
 
         winner = checkGameOver();
         if (winner != '') {
-          print('winner is $winner');
           gameOver = true;
         }
-
-        // add some if checks for even move, odd move
       });
     }
   }
@@ -62,7 +59,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void humanMove(int index) {
-    print('human chose index: $index');
     grid[index] = human;
     currPlayer = ai;
   }
@@ -75,8 +71,8 @@ class _MyAppState extends State<MyApp> {
     for (int i = 0; i < grid.length; i++) {
       if (grid[i] == '') {
         grid[i] = ai;
-        var score = minimax(grid, 0, false);
-        //var score = minimaxAB(grid, 0, int64MinValue, int64MaxValue, false);
+        //var score = minimax(grid, 0, false);
+        var score = minimaxAB(0, int64MinValue, int64MaxValue, false);
         sum += count;
         count = 0;
         grid[i] = '';
@@ -86,7 +82,7 @@ class _MyAppState extends State<MyApp> {
         }
       }
     }
-    print('there are $sum number of possible');
+    print('there are $sum number of possible cases without optimization');
     sum = 0;
     currPlayer = human;
     return bestIndex;
@@ -94,9 +90,9 @@ class _MyAppState extends State<MyApp> {
 
   int minimax(List<String> gameGrid, int depth, bool isMax) {
     var currWinner = checkGameOver();
-    if (currWinner == '') {
+    if (currWinner != '') {
       count++;
-   }
+    }
 
     if (currWinner == human) {
       return -10 + depth;
@@ -108,7 +104,6 @@ class _MyAppState extends State<MyApp> {
 
     if (isMax) {
       var maxVal = int64MinValue;
-      // var gridCopy = [...gameGrid];
       for (int i = 0; i < gameGrid.length; i++) {
         if (gameGrid[i] == '') {
           gameGrid[i] = ai;
@@ -120,7 +115,6 @@ class _MyAppState extends State<MyApp> {
       return maxVal;
     } else {
       var minVal = int64MaxValue;
-      // var gridCopy = [...gameGrid];
       for (int i = 0; i < gameGrid.length; i++) {
         if (gameGrid[i] == '') {
           gameGrid[i] = human;
@@ -133,9 +127,9 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  int minimaxAB(List<String> gameGrid, int depth, int alpha, int beta, bool isMax) {
+  int minimaxAB(int depth, int alpha, int beta, bool isMax) {
     var currWinner = checkGameOver();
-    if (currWinner == '') {
+    if (currWinner != '') {
       count++;
     }
 
@@ -149,12 +143,11 @@ class _MyAppState extends State<MyApp> {
 
     if (isMax) {
       var maxVal = int64MinValue;
-      // var gridCopy = [...gameGrid];
-      for (int i = 0; i < gameGrid.length; i++) {
-        if (gameGrid[i] == '') {
-          gameGrid[i] = ai;
-          var val = minimaxAB(gameGrid, depth + 1, alpha, beta, false);
-          gameGrid[i] = '';
+      for (int i = 0; i < grid.length; i++) {
+        if (grid[i] == '') {
+          grid[i] = ai;
+          var val = minimaxAB(depth + 1, alpha, beta, false);
+          grid[i] = '';
           maxVal = max(maxVal, val);
           alpha = max(alpha, val);
           if (beta <= alpha) {
@@ -165,15 +158,14 @@ class _MyAppState extends State<MyApp> {
       return maxVal;
     } else {
       var minVal = int64MaxValue;
-      // var gridCopy = [...gameGrid];
-      for (int i = 0; i < gameGrid.length; i++) {
-        if (gameGrid[i] == '') {
-          gameGrid[i] = human;
-          var val = minimaxAB(gameGrid, depth - 1, alpha, beta, true);
-          gameGrid[i] = '';
+      for (int i = 0; i < grid.length; i++) {
+        if (grid[i] == '') {
+          grid[i] = human;
+          var val = minimaxAB(depth - 1, alpha, beta, true);
+          grid[i] = '';
           minVal = min(minVal, val);
           beta = min(beta, val);
-          if(beta <= alpha) {
+          if (beta <= alpha) {
             break;
           }
         }
@@ -191,18 +183,20 @@ class _MyAppState extends State<MyApp> {
     }
 
     setState(() {
+      int aiIndex = aiMove();
+      setState(() {
+        grid[aiIndex] = ai;
+      });
       currPlayer = player;
     });
   }
 
-  void aiGoFirst() {
-    if (aiFirst) {
+  void humanGoFirst() {
+    if (humanFirst) {
       return;
     } else {
-      aiFirst = true;
-      int aiIndex = aiMove();
       setState(() {
-        grid[aiIndex] = ai;
+        grid[0] = '';
       });
     }
   }
@@ -286,7 +280,7 @@ class _MyAppState extends State<MyApp> {
     }
     winner = '';
 
-    aiFirst = false;
+    humanFirst = false;
     setState(() {
       currPlayer = '';
       gameOver = false;
@@ -310,8 +304,8 @@ class _MyAppState extends State<MyApp> {
                 : Column(
                     children: [
                       ElevatedButton(
-                        onPressed: aiGoFirst,
-                        child: const Text('You go first'),
+                        onPressed: humanGoFirst,
+                        child: const Text('Let me go first'),
                       ),
                       GridBuilder(
                         nextMove,
